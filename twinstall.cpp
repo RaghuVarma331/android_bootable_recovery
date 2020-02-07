@@ -430,6 +430,7 @@ int TWinstall_zip(const char* path, int* wipe_cache) {
 	} else {
 		if (Zip.EntryExists(AB_OTA)) {
 			LOGINFO("AB zip\n");
+			gui_msg(Msg(msg::kHighlight, "flash_ab_inactive=Flashing A/B zip to inactive slot: {1}")(PartitionManager.Get_Active_Slot_Display()=="A"?"B":"A"));
 			ret_val = Run_Update_Binary(path, &Zip, wipe_cache, AB_OTA_ZIP_TYPE);
 		} else {
 			if (Zip.EntryExists("ui.xml")) {
