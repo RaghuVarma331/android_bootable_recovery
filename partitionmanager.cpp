@@ -3337,7 +3337,7 @@ bool TWPartitionManager::Prepare_All_Super_Volumes() {
 bool TWPartitionManager::Is_Super_Partition(const char* fstab_line) {
 	if (!Get_Super_Status())
 		return false;
-	std::vector<std::string> super_partition_list = {"system", "vendor", "odm", "product", "system_ext"};
+	std::vector<std::string> super_partition_list = {"system", "vendor", "system_ext"};
 
 	for (auto&& fstab_partition_check: super_partition_list) {
 		if (strncmp(fstab_line, fstab_partition_check.c_str(), fstab_partition_check.size()) == 0) {
@@ -3431,3 +3431,4 @@ bool TWPartitionManager::Recreate_Logs_Dir() {
 #endif
 	return true;
 }
+
