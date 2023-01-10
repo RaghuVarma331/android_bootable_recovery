@@ -28,8 +28,6 @@
 
 #include <memory>
 
-#include <android-base/unique_fd.h>
-
 #include "minui/minui.h"
 
 std::unique_ptr<GRSurfaceFbdev> GRSurfaceFbdev::Create(size_t width, size_t height,
@@ -69,7 +67,7 @@ void MinuiBackendFbdev::SetDisplayedFramebuffer(size_t n) {
 }
 
 GRSurface* MinuiBackendFbdev::Init() {
-  android::base::unique_fd fd(open("/dev/graphics/fb0", O_RDWR | O_CLOEXEC));
+  int fd = open("/dev/graphics/fb0", O_RDWR);
   if (fd == -1) {
     perror("cannot open fb0");
     return nullptr;
@@ -78,11 +76,13 @@ GRSurface* MinuiBackendFbdev::Init() {
   fb_fix_screeninfo fi;
   if (ioctl(fd, FBIOGET_FSCREENINFO, &fi) < 0) {
     perror("failed to get fb0 info");
+    close(fd);
     return nullptr;
   }
 
   if (ioctl(fd, FBIOGET_VSCREENINFO, &vi) < 0) {
     perror("failed to get fb0 info");
+    close(fd);
     return nullptr;
   }
 
@@ -109,6 +109,7 @@ GRSurface* MinuiBackendFbdev::Init() {
   void* bits = mmap(0, fi.smem_len, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
   if (bits == MAP_FAILED) {
     perror("failed to mmap framebuffer");
+    close(fd);
     return nullptr;
   }
 
@@ -140,10 +141,11 @@ GRSurface* MinuiBackendFbdev::Init() {
 
   gr_draw = gr_framebuffer[1].get();
   memset(gr_draw->buffer_, 0, gr_draw->height * gr_draw->row_bytes);
-  fb_fd = std::move(fd);
+  fb_fd = fd;
   SetDisplayedFramebuffer(0);
 
-  printf("framebuffer: %d (%zu x %zu)\n", fb_fd.get(), gr_draw->width, gr_draw->height);
+  printf("framebuffer: %d (%zu x %zu)\n", fb_fd, gr_draw->width, gr_draw->height);
+
   Blank(false);
 
   return gr_draw;
@@ -160,4 +162,10 @@ GRSurface* MinuiBackendFbdev::Flip() {
     memcpy(gr_framebuffer[0]->buffer_, gr_draw->buffer_, gr_draw->height * gr_draw->row_bytes);
   }
   return gr_draw;
+}
+
+MinuiBackendFbdev::~MinuiBackendFbdev() {
+  if (fb_fd != -1) {
+    close(fb_fd);
+  }
 }
