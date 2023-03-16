@@ -23,9 +23,7 @@
 #include <memory>
 #include <vector>
 
-#ifndef USES_LEGACY_FD_FBDEV
 #include <android-base/unique_fd.h>
-#endif
 
 #include "graphics.h"
 #include "minui/minui.h"
@@ -53,11 +51,7 @@ class GRSurfaceFbdev : public GRSurface {
 class MinuiBackendFbdev : public MinuiBackend {
  public:
   MinuiBackendFbdev() = default;
-#ifdef USES_LEGACY_FD_FBDEV
-  ~MinuiBackendFbdev() override;
-#else
   ~MinuiBackendFbdev() override = default;
-#endif
 
   GRSurface* Init() override;
   GRSurface* Flip() override;
@@ -75,9 +69,5 @@ class MinuiBackendFbdev : public MinuiBackend {
   std::vector<uint8_t> memory_buffer;
   size_t displayed_buffer{ 0 };
   fb_var_screeninfo vi;
-#ifdef USES_LEGACY_FD_FBDEV
-  int fb_fd{ -1 };
-#else
   android::base::unique_fd fb_fd;
-#endif
 };
